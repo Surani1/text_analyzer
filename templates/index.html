@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Анализатор текста</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Анализатор текста</h1>
+
+        <textarea id="text" placeholder="Введите текст для анализа..."></textarea>
+
+        <input type="file" id="file" accept=".docx">
+
+        <button id="analyzeButton">Анализировать</button>
+
+        <div id="results"></div>
+        <div id="plot"></div>
+
+        <div class="checkbox-container">
+            <input type="checkbox" id="showCorrectedText">
+            <label for="showCorrectedText">Показать исправленный текст</label>
+        </div>
+        <div id="correctedText" class="hidden"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>

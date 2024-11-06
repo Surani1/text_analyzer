@@ -1,0 +1,22 @@
+version: 1
+disable_existing_loggers: False
+
+formatters:
+  standard:
+    format: '%(asctime)s - %(filename)s - %(levelname)s - %(message)s'
+
+handlers:
+  timed_file:
+    class: logging.handlers.TimedRotatingFileHandler
+    level: INFO
+    formatter: standard
+    filename: logs/log.txt
+    when: midnight
+    interval: 1
+    backupCount: 7
+    encoding: 'utf-8'
+
+root:
+  handlers: [timed_file]
+  level: DEBUG
+  propagate: False
