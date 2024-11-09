@@ -33,4 +33,4 @@ RUN python -m nltk.downloader punkt stopwords
 EXPOSE 5000
 
 # Определяем команду запуска приложения
-CMD ["python", "app.py"]
+CMD ["python", "run.py"]

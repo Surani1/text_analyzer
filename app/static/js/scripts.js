@@ -7,21 +7,21 @@ document.querySelectorAll('input[name="inputType"]').forEach(radio => {
 });
 fileInput.addEventListener('change', handleFileChange);
 removeFileButton.addEventListener('click', removeFile);
-
 document.getElementById('analyzeButton').addEventListener('click', analyzeText);
 
 function toggleInputMethod() {
-    const selectedType = document.querySelector('input[name=" inputType"]:checked').value;
+    const selectedType = document.querySelector('input[name="inputType"]:checked').value;
+
     if (selectedType === 'text') {
         textArea.style.display = 'block';
         fileInput.style.display = 'none';
         removeFileButton.style.display = 'none';
-        textArea.value = '';  // Очистить текстовое поле
+        textArea.value = ''; // Очистить текстовое поле
     } else {
         textArea.style.display = 'none';
         fileInput.style.display = 'block';
         removeFileButton.style.display = 'block';
-        fileInput.value = '';  // Очистить поле загрузки файла
+        fileInput.value = ''; // Очистить поле загрузки файла
     }
 }
 
@@ -60,10 +60,7 @@ async function analyzeText() {
     }
 
     try {
-        const response = await fetch('/analyze', {
-            method: 'POST',
-            body: formData
-        });
+        const response = await fetch('/analyze', { method: 'POST', body: formData });
         const data = await response.json();
 
         if (data.error) {
@@ -80,6 +77,7 @@ async function analyzeText() {
 function displayResults(data) {
     const resultsDiv = document.getElementById('results');
     const plotDiv = document.getElementById('plot');
+    
     let html = '<h2>Результаты анализа:</h2>';
 
     for (const [key, value] of Object.entries(data)) {
@@ -97,7 +95,8 @@ function displayResults(data) {
                 html += `<p><strong>${key}:</strong> ${value}</p>`;
         }
     }
-    resultsDiv.innerHTML = html;
+    
+    resultsDiv.innerHTML = html; 
 }
 
 document.getElementById('showCorrectedText').addEventListener('change', () => {

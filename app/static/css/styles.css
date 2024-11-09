@@ -6,6 +6,7 @@ body {
     background-color: #1a1a1a;
     color: #ccc;
 }
+
 .container {
     background-color: #333;
     padding: 20px;
@@ -15,11 +16,13 @@ body {
     border-radius: 8px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
+
 h1, h2, h3 {
     font-weight: bold;
     color: #fff;
     margin-bottom: 10px;
 }
+
 textarea, input[type="file"], #analyzeButton {
     width: calc(100% - 20px);
     padding: 10px;
@@ -29,11 +32,13 @@ textarea, input[type="file"], #analyzeButton {
     color: #ccc;
     margin-top: 10px;
 }
+
 textarea {
     height: 200px;
     font-size: 14px;
     resize: none;
 }
+
 button {
     display: block;
     width: auto;
@@ -46,44 +51,55 @@ button {
     transition: background-color 0.3s;
     margin: 10px auto;
 }
+
 button:hover {
     background-color: #0056b3;
 }
+
 #results, #plot, #correctedText {
     margin-top: 20px;
 }
+
 .error {
     color: #ff6b6b;
 }
+
 img {
     max-width: 100%;
     height: auto;
     border-radius: 5px;
 }
+
 .hidden {
     display: none;
 }
+
 .checkbox-container {
     display: flex;
     align-items: center;
     margin-top: 10px;
 }
+
 .checkbox-container label {
     margin-left: 10px;
 }
+
 .radio-container {
     display: flex;
     align-items: center;
     margin-top: 10px;
 }
+
 .radio-container label {
     margin-right: 20px;
 }
+
 #removeFileButton {
-    display: none;
-    background-color: #dc3545;
-    margin-top: 10px;
+    display: none; 
+    background-color: #dc3545; 
+    margin-top: 10px; 
 }
+
 #removeFileButton:hover {
-    background-color: #c82333;
+   background-color: #c82333; 
 }

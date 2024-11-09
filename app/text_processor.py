@@ -1,56 +1,26 @@
-import nltk
-
-nltk.download('punkt')
-nltk.download('stopwords')
-
-import os
 import base64
-import random
 import re
-import socket
-import logging
-import logging.config
-from datetime import datetime
 from collections import Counter
-from io import BytesIO
 
-from flask import Flask, render_template, request, jsonify
-from pyngrok import ngrok
-import docx
 from docx import Document
 import language_tool_python
 import matplotlib.pyplot as plt
 import nltk
 import pandas as pd
 import statistics as st
-import yaml
+from io import BytesIO
 from nltk.corpus import stopwords
+from pyngrok import ngrok
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 import yake
-from dotenv import load_dotenv
+import pymorphy3
+from functools import lru_cache
+from .main import logger
 
-# Загрузка переменных окружения
-load_dotenv()
-
-# Инициализация Flask приложения
-app = Flask(__name__)
-
-# Загрузка конфигурации логирования
-log_dir = 'logs'
-os.makedirs(log_dir, exist_ok=True)
-
-# Загрузка конфигурации логирования
-with open('config/logging.yaml', 'r', encoding='utf-8') as f:
-    logging_config = yaml.safe_load(f)
-logging.config.dictConfig(logging_config)
-logger = logging.getLogger(__name__)
-logger.debug("Программа запущена успешно. Начало сбора логов")
-
-# Константы
 TRAINING_DATA = {
     'text': [
         'Я очень рад этому событию!', 'Это просто ужасно и невыносимо.',
@@ -66,15 +36,18 @@ KEYWORD_EXTRACTOR_PARAMS = {"lan": "ru", "n": 1, "dedupLim": 0.3, "top": 5}
 STOP_WORDS = stopwords.words('russian')
 
 class TextProcessor:
+    # DEF init отвечает за запуск основных библиотек - yake language tool, инициализацию констант и подобное.
     def __init__(self):
+        self.morph = pymorphy3.MorphAnalyzer()
         self.preprocessor = lambda text: ' '.join(
-            word for word in re.findall(r'\b[a-zA-Zа-яА-Я]+\b', text.lower())
+            word for word in self.lemmatize_and_normalize(text)
             if word not in STOP_WORDS
         )
         self.model = self._train_model()
         self.keyword_extractor = yake.KeywordExtractor(**KEYWORD_EXTRACTOR_PARAMS)
         self.language_tool = language_tool_python.LanguageTool('ru')
 
+    # Функция тренировки модели и инициализации. Реализация с помощью SLTK-learn
     def _train_model(self):
         logger.info("Начало обучения модели")
         df = pd.DataFrame(TRAINING_DATA)
@@ -98,6 +71,7 @@ class TextProcessor:
         logger.info(f"Предсказанное настроение текста: {result}")
         return result
 
+    # Функция количества слов
     def word_frequencies(self, text):
         words = self.preprocessor(text).split()
         return Counter(words)
@@ -107,10 +81,13 @@ class TextProcessor:
         ngrams = vectorizer.fit_transform([self.preprocessor(text)])
         return vectorizer.get_feature_names_out(), ngrams.toarray()
 
+    # Вводная функция на токенизацию, а так-же определения частей речи.
     def pos_tagging(self, text):
         words = nltk.word_tokenize(text)
         return nltk.pos_tag(words, lang='rus')
 
+    # Проверка на грамматику происходит с помощью библиотеки language_tool.
+    # Перменная corrected_text отвечает за исправленный текст, который в будущем отображается уже пользователю
     def grammar_check(self, text):
         logger.info("Начало проверки грамматики")
         matches = self.language_tool.check(text)
@@ -118,10 +95,13 @@ class TextProcessor:
         logger.info(f"Найдено {len(matches)} грамматических ошибок")
         return corrected_text, len(matches)
 
+    # Лексическое разнообразие реализовано по формуле Кол-во Уникальных слов/Общее кол-во слов
     def lexical_diversity(self, text):
         words = self.preprocessor(text).split()
         return len(set(words)) / len(words) if words else 0
 
+    # Сложность текста реализована на формуле индекса удобочитаемости флеша
+    # Формула - 206.835-1.015*(Кол-во слов/Кол-во предложений) - 84.6*(Кол-во слогов/Кол-во слов)
     def text_complexity(self, text):
         words = text.split()
         sentences = re.split(r'[.!?]', text)
@@ -136,6 +116,7 @@ class TextProcessor:
         top_10_words = dict(sorted(freqs.items(), key=lambda x: x[1], reverse=True)[:10])
         keywords = self.keyword_extractor.extract_keywords(text)
         keyword_words = [word.lower() for word, _ in keywords[:10]]
+        lemmatized_keywords = [self.lemmatize_and_normalize(word)[0] for word in keyword_words]
 
         plt.figure(figsize=(8, 14))
 
@@ -151,7 +132,7 @@ class TextProcessor:
         plt.subplot(3, 1, 2)
         keyword_scores = [score for _, score in keywords[:10]]
         plt.bar(range(len(keyword_scores)), keyword_scores, color='lightgreen')
-        plt.xticks(range(len(keyword_scores)), keyword_words, rotation=45, ha='right', fontsize=10)
+        plt.xticks(range(len(keyword_scores)), lemmatized_keywords, rotation=45, ha='right', fontsize=10)
         plt.title('Значимость ключевых слов', fontsize=14)
         plt.ylabel('Значимость', fontsize=12)
         plt.grid(axis='y', linestyle='--', alpha=0.7)
@@ -177,6 +158,16 @@ class TextProcessor:
         buf.seek(0)
         return base64.b64encode(buf.getvalue()).decode('utf-8')
 
+    @lru_cache(maxsize=10000) #  кешируем 10000 лемм
+    def lemmatize_and_normalize(self, text):
+        words = re.findall(r'\b[a-zA-Zа-яА-Я]+\b', text.lower())
+        normalized_words = []
+        for word in words:
+            parsed_word = self.morph.parse(word)[0]
+            normalized_words.append(parsed_word.normalized.word)
+        return normalized_words
+
+    # Отображение всей информации, а так-же её логирование
     def analyze_text(self, text):
         logger.info("Начало анализа текста")
         processed_text = self.preprocessor(text)
@@ -188,6 +179,7 @@ class TextProcessor:
         keywords = self.keyword_extractor.extract_keywords(text)
 
         keyword_words = [word.lower() for word, _ in keywords[:10]]
+        lemmatized_keywords = [self.lemmatize_and_normalize(word)[0] for word in keyword_words]
 
         logger.info(f"Количество слов в тексте: {len(words)}")
         logger.info(f"Лексическое разнообразие: {lexical_div:.2f}")
@@ -202,68 +194,8 @@ class TextProcessor:
             'Лексическое разнообразие': f"{lexical_div:.2f}",
             'Ошибки в тексте': num_errors,
             'Исправленный текст': corrected_text,
-            'Ключевые слова': keyword_words[:10],
+            'Ключевые слова': lemmatized_keywords[:10],
             'plot': self.plot_word_frequencies(text)
         }
         logger.info("Анализ текста завершен успешно")
         return result
-
-processor = TextProcessor()
-
-# Маршруты приложения
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/analyze', methods=['POST'])
-def analyze():
-    try:
-        text = request.form.get('text')
-        file = request.files.get('file')
-
-        if file:
-            logger.info("Загрузка текста из файла")
-            doc = Document(file)
-            text = "\n".join(paragraph.text for paragraph in doc.paragraphs)
-        elif text:
-            logger.info("Использование текста из формы")
-        else:
-            return jsonify({'error': 'Пожалуйста, введите текст или загрузите файл.'}), 400
-
-        result = processor.analyze_text(text)
-        return jsonify(result)
-    except Exception as e:
-        logger.error(f"Ошибка при анализе текста: {str(e)}", exc_info=True)
-        return jsonify({'error': 'Произошла ошибка при анализе текста.'}), 500
-
-# Функция для выбора свободного порта 1024-65535
-def get_available_port():
-    while True:
-        port = random.randint(1024, 65535)
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.bind(('0.0.0.0', port))
-            sock.close()
-            return port
-        except socket.error:
-            continue
-
-def run_app(app):
-    port = get_available_port()
-    print(f"Запускаем приложение на порте {port}")
-
-    # Тунель NGROK
-    NGROK_AUTH_TOKEN = os.getenv('NGROK_AUTH_TOKEN')
-    if NGROK_AUTH_TOKEN:
-        ngrok.set_auth_token(NGROK_AUTH_TOKEN)
-    else:
-        logger.warning("NGROK_AUTH_TOKEN не установлен.")
-
-    public_url = ngrok.connect(port)
-    print(f"Общедоступный URL: {public_url}")
-
-    app.run(host='0.0.0.0', port=port)
-
-# Запуск приложения
-if __name__ == "__main__":
-    run_app(app)
