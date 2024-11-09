@@ -1,4 +1,38 @@
+const textArea = document.getElementById('text');
+const fileInput = document.getElementById('file');
+const removeFileButton = document.getElementById('removeFileButton');
+
+document.querySelectorAll('input[name="inputType"]').forEach(radio => {
+    radio.addEventListener('change', toggleInputMethod);
+});
+fileInput.addEventListener('change', handleFileChange);
+removeFileButton.addEventListener('click', removeFile);
+
 document.getElementById('analyzeButton').addEventListener('click', analyzeText);
+
+function toggleInputMethod() {
+    const selectedType = document.querySelector('input[name=" inputType"]:checked').value;
+    if (selectedType === 'text') {
+        textArea.style.display = 'block';
+        fileInput.style.display = 'none';
+        removeFileButton.style.display = 'none';
+        textArea.value = '';  // Очистить текстовое поле
+    } else {
+        textArea.style.display = 'none';
+        fileInput.style.display = 'block';
+        removeFileButton.style.display = 'block';
+        fileInput.value = '';  // Очистить поле загрузки файла
+    }
+}
+
+function handleFileChange() {
+    removeFileButton.style.display = fileInput.files.length ? 'block' : 'none';
+}
+
+function removeFile() {
+    fileInput.value = '';
+    removeFileButton.style.display = 'none';
+}
 
 async function analyzeText() {
     const resultsDiv = document.getElementById('results');
@@ -7,10 +41,23 @@ async function analyzeText() {
     plotDiv.innerHTML = '';
 
     const formData = new FormData();
-    const file = document.getElementById('file').files[0];
-    const text = document.getElementById('text').value;
+    const selectedType = document.querySelector('input[name="inputType"]:checked').value;
 
-    formData.append(file ? 'file' : 'text', file || text);
+    if (selectedType === 'text') {
+        const text = textArea.value;
+        if (!text.trim()) {
+            resultsDiv.innerHTML = '<p class="error">Пожалуйста, введите текст для анализа.</p>';
+            return;
+        }
+        formData.append('text', text);
+    } else {
+        const file = fileInput.files[0];
+        if (!file) {
+            resultsDiv.innerHTML = '<p class="error">Пожалуйста, загрузите файл для анализа.</p>';
+            return;
+        }
+        formData.append('file', file);
+    }
 
     try {
         const response = await fetch('/analyze', {
@@ -36,7 +83,7 @@ function displayResults(data) {
     let html = '<h2>Результаты анализа:</h2>';
 
     for (const [key, value] of Object.entries(data)) {
-        switch(key) {
+        switch (key) {
             case 'plot':
                 plotDiv.innerHTML = `<img src="data:image/png;base64,${value}" alt="Word frequency plot">`;
                 break;
@@ -57,3 +104,6 @@ document.getElementById('showCorrectedText').addEventListener('change', () => {
     const correctedTextDiv = document.getElementById('correctedText');
     correctedTextDiv.classList.toggle('hidden', !document.getElementById('showCorrectedText').checked);
 });
+
+// Initial setup
+toggleInputMethod();

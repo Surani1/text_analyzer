@@ -71,3 +71,19 @@ img {
 .checkbox-container label {
     margin-left: 10px;
 }
+.radio-container {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+.radio-container label {
+    margin-right: 20px;
+}
+#removeFileButton {
+    display: none;
+    background-color: #dc3545;
+    margin-top: 10px;
+}
+#removeFileButton:hover {
+    background-color: #c82333;
+}

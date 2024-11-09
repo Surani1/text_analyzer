@@ -8,7 +8,7 @@ formatters:
 handlers:
   timed_file:
     class: logging.handlers.TimedRotatingFileHandler
-    level: INFO
+    level: INFO # Переключить на DEBUG если требуется
     formatter: standard
     filename: logs/log.txt
     when: midnight

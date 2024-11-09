@@ -3,15 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Анализатор текста</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <h1>Анализатор текста</h1>
 
+        <div class="radio-container">
+            <label>
+                <input type="radio" name="inputType" value="text" checked> Ввести текст
+            </label>
+            <label>
+                <input type="radio" name="inputType" value="file"> Загрузить файл
+            </label>
+        </div>
+
         <textarea id="text" placeholder="Введите текст для анализа..."></textarea>
 
-        <input type="file" id="file" accept=".docx">
+        <input type="file" id="file" accept=".docx" class="hidden">
+        <button id="removeFileButton" class="hidden">Удалить файл</button>
 
         <button id="analyzeButton">Анализировать</button>
 
@@ -25,6 +35,6 @@
         <div id="correctedText" class="hidden"></div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script src="script.js"></script>
 </body>
 </html>
