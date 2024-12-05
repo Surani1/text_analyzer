@@ -1,25 +1,25 @@
 import base64
-import re
-from collections import Counter
-
-from docx import Document
 import language_tool_python
 import matplotlib.pyplot as plt
 import nltk
 import pandas as pd
+import pymorphy3
+import re
 import statistics as st
+
+from collections import Counter
+from functools import lru_cache
 from io import BytesIO
 from nltk.corpus import stopwords
-from pyngrok import ngrok
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 import yake
-import pymorphy3
-from functools import lru_cache
+
 from .main import logger
+
 
 TRAINING_DATA = {
     'text': [
